@@ -40,10 +40,10 @@ block content
             button(type='button', onclick='resetFilters();') Reset Filters
 
     script(type='text/javascript').
-        var overlays, layers;
+        var overlays, layers, map;
         if (typeof L !== 'undefined') {
             L.mapbox.accessToken = 'pk.eyJ1IjoiamFzb25yZWRoYXQiLCJhIjoiY2lseHVmZmkwMDVzMTgza3NiazZzZXg4ciJ9.5iDS06m7GN2wuv2hwQePpQ';
-            var map = L.mapbox.map('map')
+            map = L.mapbox.map('map')
                 .setView([38.9, -77], 13)
                 .addLayer(L.mapbox.tileLayer('mapbox.streets'));
             overlays = L.layerGroup().addTo(map);
@@ -85,7 +85,7 @@ block content
             // Refresh the map display
             showStations();
         }
-        if (typeof L !== 'undefined') {
+        if (typeof L !== 'undefined' && map) {
             var busFeatureLayer = L.mapbox.featureLayer().loadURL('/busses.json').on('ready', updateBus).addTo(map);
             function updateBus() {
                 //- busFeatureLayer.eachLayer(function(l) {
