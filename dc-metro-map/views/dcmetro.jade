@@ -36,20 +36,24 @@ block content
             label(for="checkbox")
             input(type='checkbox', name='filters' onclick='showStations();' value='blue' checked)
             | Blue Line
+        div.input
+            button(type='button', onclick='resetFilters();') Reset Filters
 
     script(type='text/javascript').
-        L.mapbox.accessToken = 'pk.eyJ1IjoiamFzb25yZWRoYXQiLCJhIjoiY2lseHVmZmkwMDVzMTgza3NiazZzZXg4ciJ9.5iDS06m7GN2wuv2hwQePpQ';
-        var map = L.mapbox.map('map')
-            .setView([38.9, -77], 13)
-            .addLayer(L.mapbox.tileLayer('mapbox.streets'));
-        var overlays = L.layerGroup().addTo(map);
-        var layers;
-        L.mapbox.featureLayer()
-            .loadURL('/assets/stations.geojson')
-            .on('ready', function(e) {
-                layers = e.target;
-                showStations();
-        });
+        var overlays, layers, map;
+        if (typeof L !== 'undefined') {
+            L.mapbox.accessToken = 'pk.eyJ1IjoiamFzb25yZWRoYXQiLCJhIjoiY2lseHVmZmkwMDVzMTgza3NiazZzZXg4ciJ9.5iDS06m7GN2wuv2hwQePpQ';
+            map = L.mapbox.map('map')
+                .setView([38.9, -77], 13)
+                .addLayer(L.mapbox.tileLayer('mapbox.streets'));
+            overlays = L.layerGroup().addTo(map);
+            L.mapbox.featureLayer()
+                .loadURL('/assets/stations.geojson')
+                .on('ready', function(e) {
+                    layers = e.target;
+                    showStations();
+            });
+        }
         var filters = document.getElementById('colors').filters;
         function showStations() {
             // first collect all of the checked boxes and create an array of strings
@@ -58,21 +62,35 @@ block content
             for (var i = 0; i < filters.length; i++) {
                 if (filters[i].checked) list.push(filters[i].value);
             }
-            // then remove any previously-displayed marker groups
-            overlays.clearLayers();
-            // create a new marker group
-            var clusterGroup = new L.MarkerClusterGroup().addTo(overlays);
-            // and add any markers that fit the filtered criteria to that group.
-            layers.eachLayer(function(layer) {
-                if (list.indexOf(layer.feature.properties.line) !== -1) {
-                    clusterGroup.addLayer(layer);
+            // then remove any previously-displayed marker groups and update the map
+            if (overlays && typeof L !== 'undefined') {
+                overlays.clearLayers();
+                // create a new marker group
+                var clusterGroup = new L.MarkerClusterGroup().addTo(overlays);
+                // and add any markers that fit the filtered criteria to that group.
+                if (layers) {
+                    layers.eachLayer(function(layer) {
+                        if (list.indexOf(layer.feature.properties.line) !== -1) {
+                            clusterGroup.addLayer(layer);
+                        }
+                    });
                 }
-            });
+            }
         }
-        var busFeatureLayer = L.mapbox.featureLayer().loadURL('/busses.json').on('ready', updateBus).addTo(map);
-        function updateBus() {
-            //- busFeatureLayer.eachLayer(function(l) {
-            //-     // you could do something with the map layer here
-            //- });
-            window.setTimeout(function() { busFeatureLayer.loadURL('/busses.json') }, 10000);  // update every 10 seconds
+        function resetFilters() {
+            // Reset all checkboxes to checked state
+            for (var i = 0; i < filters.length; i++) {
+                filters[i].checked = true;
+            }
+            // Refresh the map display
+            showStations();
+        }
+        if (typeof L !== 'undefined' && map) {
+            var busFeatureLayer = L.mapbox.featureLayer().loadURL('/busses.json').on('ready', updateBus).addTo(map);
+            function updateBus() {
+                //- busFeatureLayer.eachLayer(function(l) {
+                //-     // you could do something with the map layer here
+                //- });
+                window.setTimeout(function() { busFeatureLayer.loadURL('/busses.json') }, 10000);  // update every 10 seconds
+            }
         }
